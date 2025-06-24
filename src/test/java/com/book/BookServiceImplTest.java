@@ -18,11 +18,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 class BookServiceImplTest {
     @Mock
@@ -82,7 +84,6 @@ class BookServiceImplTest {
         Book entity = buildBook();
         BookDTO dto = buildBookDTO();
         when(booksMapper.findByCondition(any())).thenReturn(Collections.singletonList(entity));
-        when(booksMapper.countByCondition(any())).thenReturn(1L);
         when(bookMapper.toDTO(entity)).thenReturn(dto);
         PageResult<BookDTO> result = bookService.listBooks(queryDTO);
         assertEquals(1, result.getRecords().size());
@@ -174,16 +175,8 @@ class BookServiceImplTest {
         book.setId(1L);
         book.setTitle("测试书籍");
         book.setIsbn("1234567890");
-        book.setAuthorId(1L);
-        book.setAuthorName("作者");
-        book.setPublisherId(1L);
-        book.setPublisherName("出版社");
-        book.setPublicationDate(LocalDate.now());
-        book.setPrice(new BigDecimal("99.99"));
-        book.setStockQuantity(10);
-        book.setCoverImageUrl("url");
-        book.setDescription("描述");
-        book.setStatus(1);
+        book.setPublicationDate(new Date());
+
         return book;
     }
 } 
