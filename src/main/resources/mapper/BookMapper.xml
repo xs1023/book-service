@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.book.mapper.BooksMapper">
+    <!-- 定义结果映射 -->
+    <resultMap id="bookResultMap" type="com.book.po.Book">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="author" column="author"/>
+        <result property="publicationDate" column="publication_date"/>
+        <result property="isbn" column="isbn"/>
+        <result property="quantity" column="quantity"/>
+        <result property="category" column="category"/>
+    </resultMap>
+
+    <!-- 插入书籍（使用trim优化SET部分） -->
+    <insert id="insert" parameterType="com.book.po.Book" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO books
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">
+                title,
+            </if>
+            <if test="author != null">
+                author,
+            </if>
+            <if test="publicationDate != null">
+                publication_date,
+            </if>
+            <if test="isbn != null">
+                isbn,
+            </if>
+            <if test="quantity != null">
+                quantity,
+            </if>
+            <if test="category != null">
+                category
+            </if>
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null">
+                #{title},
+            </if>
+            <if test="author != null">
+                #{author},
+            </if>
+            <if test="publicationDate != null">
+                #{publicationDate},
+            </if>
+            <if test="isbn != null">
+                #{isbn},
+            </if>
+            <if test="quantity != null">
+                #{quantity},
+            </if>
+            <if test="category != null">
+                #{category},
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 更新书籍（使用trim优化SET部分） -->
+    <update id="update" parameterType="com.book.po.Book">
+        UPDATE books
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null">
+                title = #{title},
+            </if>
+            <if test="author != null">
+                author = #{author},
+            </if>
+            <if test="publicationDate != null">
+                publication_date = #{publicationDate},
+            </if>
+            <if test="isbn != null">
+                isbn = #{isbn},
+            </if>
+            <if test="quantity != null">
+                quantity = #{quantity},
+            </if>
+            <if test="category != null">
+                quantity = #{category},
+            </if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除书籍 -->
+    <delete id="delete" parameterType="Long">
+        DELETE FROM books WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID查询书籍 -->
+    <select id="findById" parameterType="Long" resultMap="bookResultMap">
+        SELECT * FROM books WHERE id = #{id}
+    </select>
+
+    <!-- 根据ISBN查询书籍 -->
+    <select id="findByIsbn" parameterType="String" resultMap="bookResultMap">
+        SELECT * FROM books WHERE isbn = #{isbn}
+    </select>
+
+    <!-- 检查ISBN是否存在 -->
+    <select id="existsByIsbn" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM books WHERE isbn = #{isbn}
+    </select>
+
+    <!-- 查询所有书籍 -->
+    <select id="findAll" resultMap="bookResultMap">
+        SELECT *
+        FROM books
+    </select>
+
+    <!-- 分页查询（使用trim优化WHERE条件） -->
+    <select id="findByPage" parameterType="map" resultMap="bookResultMap">
+        SELECT * FROM books
+        <trim prefix="WHERE" prefixOverrides="AND |OR ">
+            <if test="title != null and title != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="author != null and author != ''">
+                AND author LIKE CONCAT('%', #{author}, '%')
+            </if>
+            <if test="isbn != null and isbn != ''">
+                AND isbn = #{isbn}
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{isbn}
+            </if>
+        </trim>
+        ORDER BY id
+        LIMIT #{offset}, #{pageSize}
+    </select>
+    <!-- 统计符合条件的记录数（使用trim优化WHERE条件） -->
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM books
+        <trim prefix="WHERE" prefixOverrides="AND |OR ">
+            <if test="title != null and title != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="author != null and author != ''">
+                AND author LIKE CONCAT('%', #{author}, '%')
+            </if>
+            <if test="isbn != null and isbn != ''">
+                AND isbn = #{isbn}
+            </if>
+        </trim>
+    </select>
+
+    <select id="findByCondition" resultType="com.book.po.Book">
+        SELECT * FROM book
+        <where>
+            <if test="params.title != null and params.title != ''">
+                AND title LIKE CONCAT('%', #{params.title}, '%')
+            </if>
+            <if test="params.isbn != null and params.isbn != ''">
+                AND isbn = #{params.isbn}
+            </if>
+            <if test="params.author != null and params.author != ''">
+                AND author LIKE CONCAT('%', #{params.author}, '%')
+            </if>
+            <if test="params.publisher != null and params.publisher != ''">
+                AND publisher = #{params.publisher}
+            </if>
+            <if test="params.categoryId != null">
+                AND category_id = #{params.categoryId}
+            </if>
+            <if test="params.publishDateStart != null">
+                AND publish_date >= #{params.publishDateStart}
+            </if>
+            <if test="params.publishDateEnd != null">
+                AND publish_date <![CDATA[ <= ]]> #{params.publishDateEnd}
+            </if>
+            <if test="params.status != null">
+                AND status = #{params.status}
+            </if>
+            <if test="params.minPrice != null">
+                AND price >= #{params.minPrice}
+            </if>
+            <if test="params.maxPrice != null">
+                AND price <![CDATA[ <= ]]> #{params.maxPrice}
+            </if>
+        </where>
+        ORDER BY ${params.sortBy} ${params.sortDirection}
+        LIMIT #{params.offset}, #{params.pageSize}
+    </select>
+
+    <select id="countByCondition" resultType="int">
+        SELECT COUNT(*) FROM book
+        <where>
+            <!-- 相同的条件判断 -->
+            <include refid="queryConditions"/>
+        </where>
+    </select>
+
+    <sql id="queryConditions">
+        <if test="title != null and title != ''">
+            AND title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        <!-- 其他条件... -->
+    </sql>
+</mapper>
